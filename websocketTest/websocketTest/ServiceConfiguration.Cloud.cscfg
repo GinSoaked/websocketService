@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceConfiguration serviceName="websocketTest" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2014-01.2.3">
+  <Role name="playerHandler">
+    <Instances count="1" />
+    <ConfigurationSettings>
+      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="DefaultEndpointsProtocol=https;AccountName=websocketteststorage;AccountKey=Q7Tiy2ootJFShtT+M+tLI3Wru2PqiwrwNO2m9bNML+B47IxrXrop6U9/1I/WLBh1pkOFEDhKLMbD9KkI46ABfQ==" />
+    </ConfigurationSettings>
+  </Role>
+</ServiceConfiguration>
