@@ -18,11 +18,14 @@ namespace playerHandler
     // OnStart is the entry point
     public class WorkerRole : RoleEntryPoint
     {
-        
-
         GameManager m_gameManager; // holds all entities
         NetworkManager m_netManager; // handles client interaction
+        World m_world; // game logic
 
+        double m_networkPollTimer = 0; // update clients 25 times a second
+        double m_networkPollFreq = (double)1 / (double)25;
+
+        DateTime m_currentTime, m_previousTime;
         public override bool OnStart()
         {
             // Set the maximum number of concurrent connections 
@@ -33,30 +36,77 @@ namespace playerHandler
 
             m_gameManager = new GameManager();
             m_netManager = new NetworkManager(m_gameManager);
-
+            m_world = new World(m_gameManager);
             return base.OnStart();
         }
 
         public override void Run()
         {
             Trace.TraceInformation("playerHandler entry point called");
+            TimeSpan ts;
+
+            ////Thread worldThread = new Thread(new ThreadStart(RunWorld));
+            //Thread networkingThread = new Thread(new ThreadStart(RunNetworking));
+            double dt = 0;
+            ////worldThread.Start();
+            //networkingThread.Start();
 
             while (true)
-            {        
-                m_gameManager.Update();
-                m_netManager.Update();
-                //Trace.WriteLine(length);
-                Thread.Sleep(1000 / 30);
+            {
+                m_currentTime = DateTime.Now;
+                ts = m_currentTime - m_previousTime;
+                dt = ts.TotalMilliseconds / 1000;
+                m_world.Update(dt);
+                m_gameManager.Update(dt);
+
+                m_networkPollTimer -= dt;
+                if (m_networkPollTimer <= 0)
+                {
+                    m_netManager.Update();
+                    m_networkPollTimer = m_networkPollFreq;
+                }
+
+
+                m_previousTime = m_currentTime;
             }
         }
 
+        //private void RunWorld()
+        //{
+        //    while (true)
+        //    {
+        //        //if (m_gameManager.AquireLock())
+        //        {
+        //            m_world.Update(dt);
+        //            //m_gameManager.ReleaseLock();
+        //        }
+        //    }     
+        //}
 
+        private void RunNetworking()
+        {
+            TimeSpan ts;
+            double dt = 0;
+            while (true)
+            {
+                m_currentTime = DateTime.Now;
+                ts = m_currentTime - m_previousTime;
+                dt = ts.TotalMilliseconds / 1000;
+                m_networkPollTimer -= dt;
+                if (m_networkPollTimer <= 0)
+                {
+                    if (m_gameManager.AquireLock())
+                    {
 
-
-
-
+                        m_netManager.Update();
+                        m_networkPollTimer = m_networkPollFreq;
+                        m_gameManager.ReleaseLock();
+                    }
+                }
+                
+                m_previousTime = m_currentTime;
+            }
+        }
 
     }
-
-    
 }

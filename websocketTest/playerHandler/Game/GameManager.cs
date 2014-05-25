@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
 
 namespace playerHandler
 {
@@ -11,6 +13,26 @@ namespace playerHandler
         List<Entity> m_allEntities = new List<Entity>();
         Stack<Entity> m_toAdd = new Stack<Entity>();
         Stack<Entity> m_toRemove = new Stack<Entity>();
+        Mutex m_entitylock = new Mutex();
+
+        private int m_nextIDtoUse = 0;
+        public int GetUniqueID()
+        {
+            int i = m_nextIDtoUse;
+            m_nextIDtoUse++;
+            return i;
+        }
+
+        public bool AquireLock()
+        {
+            if (m_entitylock.WaitOne(100))
+                return true;// wait for 1ms
+            else return false;
+        }
+        public void ReleaseLock()
+        {
+            m_entitylock.ReleaseMutex();
+        }
 
         public GameManager()
         {
@@ -29,29 +51,33 @@ namespace playerHandler
             e.OnRemove();
         }
 
-        public virtual void Update()
+        public virtual void Update(double dt)
         {
-            // remove
-            for (int i = m_toRemove.Count - 1; i >= 0; i--)
+            if(m_entitylock.WaitOne(1))
             {
-                m_allEntities.Remove(m_toRemove.Pop());
-            }
-            // add
-            for (int i = m_toAdd.Count - 1; i >= 0; i--)
-            {
-                m_allEntities.Add(m_toAdd.Pop());
-            }
-            // update
-            for (int i = 0; i < m_allEntities.Count; i++)
-            {
-                m_allEntities[i].Update(0.1f); // needs actual time
+                // remove
+                for (int i = m_toRemove.Count - 1; i >= 0; i--)
+                {
+                    m_allEntities.Remove(m_toRemove.Pop());
+                }
+                // add
+                for (int i = m_toAdd.Count - 1; i >= 0; i--)
+                {
+                    m_allEntities.Add(m_toAdd.Pop());
+                }
+                // update
+                for (int i = 0; i < m_allEntities.Count; i++)
+                {
+                    m_allEntities[i].Update(dt);
+                }
+                m_entitylock.ReleaseMutex();
             }
         }
 
         public override string ToString()
         {
             int length = m_allEntities.Count();
-            string output = ".";
+            string output = ";";
             int numbertoupdate = 0;
             for (int i = 0; i < length; i++)
             {
@@ -72,9 +98,9 @@ namespace playerHandler
 
     public struct Vector2
     {
-        public int x;
-        public int y;
-        public Vector2(int x, int y)
+        public float x;
+        public float y;
+        public Vector2(float x, float y)
         {
             this.x = x;
             this.y = y;

@@ -9,6 +9,7 @@ using Microsoft.WindowsAzure.Diagnostics;
 using Microsoft.WindowsAzure.ServiceRuntime;
 using Microsoft.WindowsAzure.Storage;
 using System.Security.Cryptography;
+using System.Diagnostics;
 using Fleck;
 
 namespace playerHandler
@@ -18,7 +19,7 @@ namespace playerHandler
         List<Client> m_players = new List<Client>();
         public WebSocketServer m_server = null;
         public GameManager m_gameManager = null;
-        int m_nextIDtoUse = 0;
+
         public NetworkManager(GameManager game)
         {
             m_gameManager = game;
@@ -30,9 +31,8 @@ namespace playerHandler
                 socket.OnOpen = () =>
                 {
 
-                    m_players.Add(new Client(socket, m_nextIDtoUse, m_gameManager));
+                    m_players.Add(new Client(socket, m_gameManager.GetUniqueID(), m_gameManager));
                     //Trace.WriteLine("Opened connection to client " + m_nextIDtoUse);
-                    m_nextIDtoUse++;
 
                 };
 
@@ -68,8 +68,8 @@ namespace playerHandler
                 for (int i = 0; i < length; i++)
                 {
                     //   thisId.numberOfClients.idn typen posx posy,idn+1 typen+1 posx posy
-                    string output2 = m_players[i].m_myEntity.m_entityID + "." + output;
-                    //Trace.WriteLine(output2);
+                    string output2 = m_players[i].m_myEntity.m_entityID + ";" + output;
+                    Trace.WriteLine(output2);
                     m_players[i].Send(output2);
                    // bytesSent += output2.Length;
                 }

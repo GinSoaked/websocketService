@@ -19,7 +19,10 @@ namespace playerHandler
             m_socket = socket;
             m_socket.OnMessage = message => parseMessage(message);
             m_myEntity = new Entity(id, EntityType.player, new Vector2(200, 200));
+
+            manager.AquireLock();
             manager.AddEntity(m_myEntity);
+            manager.ReleaseLock();
         }
 
 
@@ -41,7 +44,9 @@ namespace playerHandler
             {
                 m_myEntity.m_position.y += 4;
             }
-            m_myEntity.m_updated = true;
+            
+            if (message!= "Ping")
+                m_myEntity.m_updated = true;
         }
 
         public void Send(string output)
